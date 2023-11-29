@@ -76,14 +76,12 @@ def tool(
         return new_f
 
     # enable use decorator without "()" if all arguments are default values
-    if func is not None:
-        return tool_decorator(func)
-    return tool_decorator
+    return tool_decorator(func) if func is not None else tool_decorator
 
 
 def parse_all_args(argnames, args, kwargs) -> dict:
     """Parse args + kwargs to kwargs."""
-    all_args = {name: value for name, value in zip(argnames, args)}
+    all_args = dict(zip(argnames, args))
     all_args.update(kwargs)
     return all_args
 

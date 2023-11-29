@@ -60,15 +60,12 @@ class FlowOperations(_ScopeDependentOperations):
 
         rest_flow = flow._to_rest_object()
 
-        # create flow draft
-        rest_flow_result = self._service_caller.create_flow(
+        return self._service_caller.create_flow(
             subscription_id=self._operation_scope.subscription_id,
             resource_group_name=self._operation_scope.resource_group_name,
             workspace_name=self._operation_scope.workspace_name,
             body=rest_flow,
         )
-
-        return rest_flow_result
 
     def _get(self, flow_id):
         # TODO: support load remote flow with meta
@@ -96,14 +93,13 @@ class FlowOperations(_ScopeDependentOperations):
 
     @classmethod
     def _try_resolve_code_for_flow(cls, flow: Flow, ops: OperationOrchestrator, ignore_tools_json=False) -> None:
-        if flow.path:
-            # remote path
-            if flow.path.startswith("azureml://datastores"):
-                flow._code_uploaded = True
-                return
-        else:
+        if not flow.path:
             raise ValueError("Path is required for flow.")
 
+        # remote path
+        if flow.path.startswith("azureml://datastores"):
+            flow._code_uploaded = True
+            return
         with flow._build_code() as code:
             if code is None:
                 return
@@ -129,7 +125,7 @@ class FlowOperations(_ScopeDependentOperations):
             ignore_file = code._ignore_file
             upload_paths = []
             source_path = Path(code.path).resolve()
-            prefix = os.path.basename(source_path) + "/"
+            prefix = f"{os.path.basename(source_path)}/"
             for root, _, files in os.walk(source_path, followlinks=True):
                 upload_paths += list(
                     traverse_directory(

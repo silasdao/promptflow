@@ -94,10 +94,8 @@ class TestTelemetry:
         with patch.object(AzureEventHandler, "log_record_to_envelope") as mock_log:
             mock_log.side_effect = log_event
             with cli_consent_config_overwrite(True):
-                try:
+                with contextlib.suppress(Exception):
                     pf.runs.get("not_exist")
-                except Exception:
-                    pass
             # sleep a while to make sure log thread can finish.
             time.sleep(20)
 
@@ -128,11 +126,9 @@ class TestTelemetry:
 
         with patch.object(AzureEventHandler, "log_record_to_envelope") as mock_log:
             mock_log.side_effect = log_event
-            with cli_consent_config_overwrite(True), cli_eu_config_overwrite():
-                try:
+            with (cli_consent_config_overwrite(True), cli_eu_config_overwrite()):
+                with contextlib.suppress(Exception):
                     pf.runs.get("not_exist")
-                except Exception:
-                    pass
                 # the logging handler should use eu instrumentation key
                 logger = get_telemetry_logger()
                 handler = logger.handlers[0]
