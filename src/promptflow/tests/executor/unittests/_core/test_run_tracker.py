@@ -40,7 +40,7 @@ class TestRunTracker:
         )
         run_tracker.set_inputs(
             "run_id_1",
-            {"input": "input_1", "generator": GeneratorProxy(item for item in range(10))}
+            {"input": "input_1", "generator": GeneratorProxy(iter(range(10)))},
         )
         run_infos = run_tracker.collect_all_run_infos_as_dicts()
         assert len(run_infos["flow_runs"]) == 1

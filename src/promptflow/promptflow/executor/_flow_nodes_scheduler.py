@@ -68,15 +68,9 @@ class FlowNodesScheduler:
         return self._dag_manager.completed_nodes_outputs, self._dag_manager.bypassed_nodes
 
     def _execute_nodes(self, executor: ThreadPoolExecutor):
-        # Skip nodes and update node run info until there are no nodes to bypass
-        nodes_to_bypass = self._dag_manager.pop_bypassable_nodes()
-        while nodes_to_bypass:
+        while nodes_to_bypass := self._dag_manager.pop_bypassable_nodes():
             self._bypass_nodes(nodes_to_bypass)
-            nodes_to_bypass = self._dag_manager.pop_bypassable_nodes()
-
-        # Submit nodes that are ready to run
-        nodes_to_exec = self._dag_manager.pop_ready_nodes()
-        if nodes_to_exec:
+        if nodes_to_exec := self._dag_manager.pop_ready_nodes():
             self._submit_nodes(executor, nodes_to_exec)
 
     def _collect_outputs(self, completed_futures: List[Future]):

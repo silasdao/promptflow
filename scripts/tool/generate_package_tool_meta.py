@@ -53,10 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     m = importlib.import_module(args.module)
 
-    icon = ""
-    if args.icon:
-        icon = check_image_type_and_generate_data_url(args.icon)
-
+    icon = check_image_type_and_generate_data_url(args.icon) if args.icon else ""
     if args.tool_type == "custom_llm":
         tools_dict = generate_custom_llm_tools_in_module_as_dict(
             m,

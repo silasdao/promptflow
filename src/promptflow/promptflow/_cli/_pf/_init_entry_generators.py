@@ -83,9 +83,7 @@ class ValueType(str, Enum):
             return ValueType.BOOL
         if t == str:
             return ValueType.STRING
-        if t == list:
-            return ValueType.LIST
-        return ValueType.OBJECT
+        return ValueType.LIST if t == list else ValueType.OBJECT
 
 
 class ToolMetaGenerator(BaseGenerator):
@@ -333,6 +331,4 @@ class InitGenerator(BaseGenerator):
         pass
 
     def generate(self) -> str:
-        with open(self.tpl_file) as f:
-            init_content = f.read()
-        return init_content
+        return Path(self.tpl_file).read_text()

@@ -36,9 +36,7 @@ def is_telemetry_enabled():
         return str(telemetry_enabled).lower() == "true"
     config = Configuration.get_instance()
     telemetry_consent = config.get_telemetry_consent()
-    if telemetry_consent is not None:
-        return telemetry_consent
-    return False
+    return telemetry_consent if telemetry_consent is not None else False
 
 
 def get_telemetry_logger():

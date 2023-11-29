@@ -43,16 +43,17 @@ class PatchedJSONSchema(JSONSchema):
         # This is in the upcoming release of marshmallow-jsonschema, but not available yet
         if isinstance(field, fields.Dict):
             values = metadata.get("values", None) or field.value_field
-            json_schema = {"title": field.attribute or field.data_key or field.name}
-            json_schema["type"] = "object"
             if values:
                 values.parent = field
-            json_schema["additionalProperties"] = self._get_schema_for_field(obj, values) if values else {}
-            return json_schema
+            return {
+                "title": field.attribute or field.data_key or field.name,
+                "type": "object",
+                "additionalProperties": self._get_schema_for_field(obj, values)
+                if values
+                else {},
+            }
         if isinstance(field, fields.Raw):
-            json_schema = {"title": field.attribute or field.data_key or field.name}
-            return json_schema
-
+            return {"title": field.attribute or field.data_key or field.name}
         return super()._from_python_type(obj, field, pytype)
 
     def _get_schema_for_field(self, obj, field):
@@ -61,15 +62,14 @@ class PatchedJSONSchema(JSONSchema):
             schema = field._jsonschema_type_mapping()  # pylint: disable=protected-access
         elif "_jsonschema_type_mapping" in field.metadata:
             schema = field.metadata["_jsonschema_type_mapping"]
+        elif isinstance(field, UnionField):
+            schema = self._get_schema_for_union_field(obj, field)
+        elif isinstance(field, ExperimentalField):
+            schema = self._get_schema_for_field(obj, field.experimental_field)
+        elif isinstance(field, fields.Constant):
+            schema = {"const": field.constant}
         else:
-            if isinstance(field, UnionField):
-                schema = self._get_schema_for_union_field(obj, field)
-            elif isinstance(field, ExperimentalField):
-                schema = self._get_schema_for_field(obj, field.experimental_field)
-            elif isinstance(field, fields.Constant):
-                schema = {"const": field.constant}
-            else:
-                schema = super()._get_schema_for_field(obj, field)
+            schema = super()._get_schema_for_field(obj, field)
         if field.data_key:
             schema["title"] = field.data_key
         return schema
@@ -85,10 +85,7 @@ class PatchedJSONSchema(JSONSchema):
             schemas.append({"type": "string", "pattern": "^file:.*"})
         if field.allow_none:
             schemas.append({"type": "null"})
-        if field.is_strict:
-            schema = {"oneOf": schemas}
-        else:
-            schema = {"anyOf": schemas}
+        schema = {"oneOf": schemas} if field.is_strict else {"anyOf": schemas}
         # This happens in the super() call to get_schema, doing here to allow for adding
         # descriptions and other schema attributes from marshmallow metadata
         metadata = field.metadata.get("metadata", {})
@@ -128,12 +125,11 @@ class PatchedJSONSchema(JSONSchema):
 
     def get_required(self, obj):
         """Fill out required field."""
-        required = []
-
-        for _, field in sorted(obj.fields.items()):
-            if field.required:
-                required.append(field.metadata.get("name") or field.data_key or field.name)
-
+        required = [
+            (field.metadata.get("name") or field.data_key or field.name)
+            for _, field in sorted(obj.fields.items())
+            if field.required
+        ]
         return required or missing
 
 

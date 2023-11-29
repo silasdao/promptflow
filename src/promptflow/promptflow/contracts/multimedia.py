@@ -44,6 +44,4 @@ class Image(PFBytes):
     def serialize(self, encoder: Callable = None):
         """Serialize the image to a dictionary."""
 
-        if encoder is None:
-            return self.__str__()
-        return encoder(self)
+        return self.__str__() if encoder is None else encoder(self)
